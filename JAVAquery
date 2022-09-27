@@ -1,0 +1,222 @@
+function Clock(id) {
+    this.id = id;
+    this.element = document.getElementById(id);
+    this.element.innerHTML = "00:00:00.000";
+    this.timeout = 69; //1 = much cpu usage; 1000 = 1 second; 20-70 seem ok.
+    this.oStartDate = 0;
+    this.instance = 0;
+}
+Clock.prototype = {
+    readyFor: function(looping) {
+        if ((this.instance == 1) && (looping == true)) {
+            return true;
+        } else if ((typeof looping == 'undefined') && (this.instance == 0) && (this.element.innerHTML == "00:00:00.000")) {
+            // Initial Call Validated
+            this.instance = 1;
+            looping = true;
+            this.oStartDate = new Date();
+            //this.oStartDate.setSeconds(this.oStartDate.getSeconds() - 55);
+            //this.oStartDate.setMinutes(this.oStartDate.getMinutes() - 59);
+            //this.oStartDate.setHours(this.oStartDate.getHours() - 23);    
+            return true;
+        }
+        // Subsequent calls will fail (not allowing duplicate parallel runs on same start button)
+        return false;
+    },
+    startClock: function(looping) {
+        if (this.readyFor(looping)) {
+            this.element.innerHTML = this.formatClock();
+            // bind is only available in browsers supporting ECMAScript 5
+            // this.loop = setTimeout(this.startClock.bind(this, true), this.timeout);
+            this.loop = setTimeout($.proxy(function(o) {this.startClock(true)},this), this.timeout);            
+        }
+    },
+    formatClock: function() {
+        var oNowDate = new Date();
+        var Milliseconds = (oNowDate.getTime() - this.oStartDate.getTime());
+        return sprintf("%02d:%02d:%02d.%03d", (Milliseconds / (1000 * 60 * 60) % 24), (Milliseconds / (1000 * 60) % 60), ((Milliseconds / 1000) % 60), ((Milliseconds / 1000) % 1) * 1000);
+
+    },
+    lapClock: function() {
+        var mainDiv = document.getElementById(this.id);
+        var newDiv = document.createElement("div");
+        newDiv.className = "lap";
+        var newContent = document.createTextNode(this.formatClock());
+        newDiv.appendChild(newContent);
+        document.body.insertAfter(newDiv, mainDiv);
+    },
+    resetClock: function() {
+        this.element.innerHTML = "00:00:00.000";
+        this.oStartDate = 0;
+        this.instance = 0;
+        this.loop = null;
+    },
+    stopClock: function() {
+        clearTimeout(this.loop);
+        this.oStartDate = 0;
+        this.instance = 0;
+        this.loop = null;
+    }
+}
+
+function initClock(id) {
+    value = document.getElementById(id).innerHTML;
+    // if (typeof window[id] == 'undefined') {
+        window[id] = new Clock(id);
+    // }
+}
+window.onload = function() {
+    initClock("clock1");
+    initClock("clock2");
+    initClock("clock3");
+}
+
+function sprintf() {
+    var a = /%%|%(\d+\$)?([-+\'#0 ]*)(\*\d+\$|\*|\d+)?(\.(\*\d+\$|\*|\d+))?([scboxXuidfegEG])/g;
+    var b = arguments,
+        c = 0,
+        d = b[c++];
+    var e = function(a, b, c, d) {
+        if (!c) {
+            c = " "
+        }
+        var e = a.length >= b ? "" : Array(1 + b - a.length >>> 0).join(c);
+        return d ? a + e : e + a
+    };
+    var f = function(a, b, c, d, f, g) {
+        var h = d - a.length;
+        if (h > 0) {
+            if (c || !f) {
+                a = e(a, d, g, c)
+            } else {
+                a = a.slice(0, b.length) + e("", h, "0", true) + a.slice(b.length)
+            }
+        }
+        return a
+    };
+    var g = function(a, b, c, d, g, h, i) {
+        var j = a >>> 0;
+        c = c && j && {
+            2: "0b",
+            8: "0",
+            16: "0x"
+        }[b] || "";
+        a = c + e(j.toString(b), h || 0, "0", false);
+        return f(a, c, d, g, i)
+    };
+    var h = function(a, b, c, d, e, g) {
+        if (d != null) {
+            a = a.slice(0, d)
+        }
+        return f(a, "", b, c, e, g)
+    };
+    var i = function(a, d, i, j, k, l, m) {
+        var n;
+        var o;
+        var p;
+        var q;
+        var r;
+        if (a == "%%") {
+            return "%"
+        }
+        var s = false,
+            t = "",
+            u = false,
+            v = false,
+            w = " ";
+        var x = i.length;
+        for (var y = 0; i && y < x; y++) {
+            switch (i.charAt(y)) {
+            case " ":
+                t = " ";
+                break;
+            case "+":
+                t = "+";
+                break;
+            case "-":
+                s = true;
+                break;
+            case "'":
+                w = i.charAt(y + 1);
+                break;
+            case "0":
+                u = true;
+                break;
+            case "#":
+                v = true;
+                break
+            }
+        }
+        if (!j) {
+            j = 0
+        } else if (j == "*") {
+            j = +b[c++]
+        } else if (j.charAt(0) == "*") {
+            j = +b[j.slice(1, -1)]
+        } else {
+            j = +j
+        }
+        if (j < 0) {
+            j = -j;
+            s = true
+        }
+        if (!isFinite(j)) {
+            throw new Error("sprintf: (minimum-)width must be finite")
+        }
+        if (!l) {
+            l = "fFeE".indexOf(m) > -1 ? 6 : m == "d" ? 0 : undefined
+        } else if (l == "*") {
+            l = +b[c++]
+        } else if (l.charAt(0) == "*") {
+            l = +b[l.slice(1, -1)]
+        } else {
+            l = +l
+        }
+        r = d ? b[d.slice(0, -1)] : b[c++];
+        switch (m) {
+        case "s":
+            return h(String(r), s, j, l, u, w);
+        case "c":
+            return h(String.fromCharCode(+r), s, j, l, u);
+        case "b":
+            return g(r, 2, v, s, j, l, u);
+        case "o":
+            return g(r, 8, v, s, j, l, u);
+        case "x":
+            return g(r, 16, v, s, j, l, u);
+        case "X":
+            return g(r, 16, v, s, j, l, u).toUpperCase();
+        case "u":
+            return g(r, 10, v, s, j, l, u);
+        case "i":
+        case "d":
+            n = +r | 0;
+            o = n < 0 ? "-" : t;
+            r = o + e(String(Math.abs(n)), l, "0", false);
+            return f(r, o, s, j, u);
+        case "e":
+        case "E":
+        case "f":
+        case "F":
+        case "g":
+        case "G":
+            n = +r;
+            o = n < 0 ? "-" : t;
+            p = ["toExponential", "toFixed", "toPrecision"]["efg".indexOf(m.toLowerCase())];
+            q = ["toString", "toUpperCase"]["eEfFgG".indexOf(m) % 2];
+            r = o + Math.abs(n)[p](l);
+            return f(r, o, s, j, u)[q]();
+        default:
+            return a
+        }
+    };
+    return d.replace(a, i)
+}
+if (!document.insertAfter) {
+    document.insertAfter = function(a, b) {
+        return (b = b.nextSibling) ? this.insertBefore(a, b) : this.appendChild(a)
+    };
+    if (this.Node) {
+        Node.prototype.insertAfter = document.insertAfter
+    }
+}
