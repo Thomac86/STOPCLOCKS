@@ -1,0 +1,5 @@
+            body, html{font:1em normal monospace;}
+            div.lap{float:left;background:#fca;padding:0 0.75em;}
+            div.fl{float:left;}
+            div.clock{background:#009;color:#eec;padding:0 0.75em;}
+            div.cl{clear:both;}
